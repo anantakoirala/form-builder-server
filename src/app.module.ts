@@ -8,6 +8,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { FormsModule } from './forms/forms.module';
 import config from '../config';
 import { PublicModule } from './public/public.module';
+import { ResponseModule } from './response/response.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { PublicModule } from './public/public.module';
     }),
     FormsModule,
     PublicModule,
+    ResponseModule,
   ],
   controllers: [AppController],
   providers: [AppService],

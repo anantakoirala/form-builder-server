@@ -39,7 +39,7 @@ model Form {
   user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   name         String
   description  String?        @db.Text
-  jsonBlocks   Json?
+  jsonBlocks   Json           @default("[]") // Empty array as default
   views        Int            @default(0)
   responses    Int            @default(0)
   published    Boolean        @default(false)

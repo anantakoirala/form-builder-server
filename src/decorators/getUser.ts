@@ -1,4 +1,8 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import {
+  createParamDecorator,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Request } from 'express';
 
 interface UserPayload {
@@ -10,8 +14,12 @@ interface UserPayload {
 export const GetUser = createParamDecorator(
   (data: keyof UserPayload | undefined, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest<Request>();
-    const user = request.user as UserPayload; // Explicitly type user
+    const user = request?.user as UserPayload | undefined;
 
-    return data ? user?.[data] : user;
+    if (!user) {
+      throw new UnauthorizedException('User not authenticated');
+    }
+
+    return data ? user[data] : user;
   },
 );

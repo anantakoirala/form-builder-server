@@ -58,7 +58,9 @@ export class FormsService {
       }
       return form;
     } catch (error) {
-      console.error('Error fetching form:', error);
+      if (error instanceof NotFoundException) {
+        throw error; // Ensure that the NotFoundException is not caught by another part of the code
+      }
       throw new InternalServerErrorException(
         'Something went wrong, please try again later',
       );

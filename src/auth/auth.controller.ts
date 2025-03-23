@@ -92,6 +92,47 @@ export class AuthController {
     return res.status(200).json({ success: true, user: result });
   }
 
+  @UseGuards(AuthGuard('refresh'))
   @Post('refresh-token')
-  generateRefreshToken() {}
+  async generateRefreshToken(
+    @GetUser() user: { userId: number },
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const result = await this.authService.generateRefreshToken(user.userId);
+
+    const accessTokenExpiry = Number(
+      this.configService.get<string>('jwt.access_token_expiry') || '3600', // Default to 3600 seconds (1 hour)
+    );
+    const refreshTokenExpiry = Number(
+      this.configService.get<string>('jwt.refresh_token_expiry') || '604800', // Default to 7 days in seconds
+    );
+
+    // Convert access token expiry to milliseconds
+    const accessTokenExpiryMs = accessTokenExpiry * 1000;
+    const refreshTokenExpiryMs = refreshTokenExpiry * 1000;
+    res.cookie('refresh_token', result.refreshToken, {
+      httpOnly: true,
+      path: '/',
+      domain: isDevelopment ? 'localhost' : undefined, // Domain only for development
+      secure: !isDevelopment, // Secure is true in production
+      sameSite: isDevelopment ? 'lax' : 'none', // sameSite depends on environment
+      expires: new Date(Date.now() + refreshTokenExpiryMs),
+    });
+    res.cookie('token', result.accessToken, {
+      httpOnly: true,
+      path: '/',
+      domain: isDevelopment ? 'localhost' : undefined, // Domain only for development
+      secure: !isDevelopment, // Secure is true in production
+      sameSite: isDevelopment ? 'lax' : 'none', // sameSite depends on environment
+      expires: new Date(Date.now() + accessTokenExpiryMs),
+    });
+    return res.status(200).json({
+      success: true,
+      message: 'Login Successfully',
+      refreshToken: result.refreshToken,
+      token: result.accessToken,
+    });
+  }
 }

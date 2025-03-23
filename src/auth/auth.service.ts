@@ -50,8 +50,8 @@ export class AuthService {
     }
 
     // Generate Tokens
-    const token = await this.generateUserTokens(user.id);
-
+    const token = this.generateUserTokens(user.id);
+    await this.storeRefreshToken(user.id, token.refreshToken);
     return {
       success: true,
       accessToken: token.accessToken,
@@ -59,8 +59,7 @@ export class AuthService {
     };
   }
 
-  async generateUserTokens(userId: number) {
-    console.log('port ananta token', typeof process.env.ACCESS_TOKEN_EXPIRY);
+  generateUserTokens(userId: number) {
     // Retrieve expiry times from config and convert to numbers
     const accessTokenExpiry = Number(
       this.configService.get<string>('jwt.access_token_expiry') || '3600', // Default to 3600 seconds (1 hour)
@@ -91,7 +90,7 @@ export class AuthService {
     );
 
     // Store refresh token in database (or any other required storage)
-    await this.storeRefreshToken(userId, refreshToken);
+    //await this.storeRefreshToken(userId, refreshToken);
 
     return { accessToken, refreshToken };
   }
@@ -136,5 +135,45 @@ export class AuthService {
         'Something went wrong, please try again later',
       );
     }
+  }
+  async generateRefreshToken(userId: number) {
+    // Fetch stored refresh token from DB
+    const storedToken = await this.prisma.refreshToken.findFirst({
+      where: { userId },
+    });
+
+    // Check if token exists
+    if (!storedToken) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    // Check if refresh token has expired
+    if (new Date(storedToken.expiresAt) < new Date()) {
+      throw new UnauthorizedException(
+        'Refresh token has expired. Please log in again.',
+      );
+    }
+
+    // Generate new tokens
+    const token = this.generateUserTokens(userId);
+
+    await this.prisma.refreshToken.delete({
+      where: { id: storedToken.id },
+    });
+
+    // // Create a new refresh token entry
+    await this.prisma.refreshToken.create({
+      data: {
+        userId,
+        token: token.refreshToken,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      },
+    });
+
+    return {
+      success: true,
+      accessToken: token.accessToken,
+      refreshToken: token.refreshToken,
+    };
   }
 }
