@@ -10,6 +10,7 @@ const AcceptedChildBlockType = [
   'Paragraph',
   'Select',
   'MultipleChoice',
+  'Fileupload',
 ];
 
 // Define the schema for TextField attributes
@@ -17,6 +18,12 @@ const TextFieldAttributesSchema = z.object({
   label: z.string().trim().min(2).max(255),
   required: z.boolean().default(false),
   placeHolder: z.string().trim().optional(),
+  helperText: z.string().trim().max(255).optional(),
+});
+
+const FileUploadAttributesSchema = z.object({
+  label: z.string().trim().min(2).max(255),
+  required: z.boolean().default(false),
   helperText: z.string().trim().max(255).optional(),
 });
 
@@ -72,22 +79,20 @@ const StarRatingAttributesSchema = z.object({
 const ChildBlockSchema = z
   .object({
     id: z.string(),
-    blockType: z.string(), // Child blocks can have any type
-    attributes: z.record(z.any()).optional(), // attributes will be validated below
+    blockType: z.string(),
+    attributes: z.record(z.any()).optional(),
   })
-  .refine(
-    (data) => {
-      // Log the blockType to the console
-      console.log('Checking blockType:', data.blockType);
+  .superRefine((data, ctx) => {
+    console.log('Checking blockType:', data.blockType);
 
-      // Check if blockType is in AcceptedChildBlockType
-      return AcceptedChildBlockType.includes(data.blockType);
-    },
-    {
-      message: `Invalid blockType`,
-      path: ['blockType'],
-    },
-  )
+    if (!AcceptedChildBlockType.includes(data.blockType)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Invalid blockType: ${data.blockType}`,
+        path: ['blockType'],
+      });
+    }
+  })
   .refine(
     (data) => {
       // Check attributes for each blockType
@@ -107,8 +112,9 @@ const ChildBlockSchema = z
         case 'Select':
           return SelectFieldAttributesSchema.safeParse(data.attributes).success;
         case 'MultipleChoice':
-          return MultipleChoiceAttributesSchema.safeParse(data.attributes)
-            .success;
+          return MultipleChoiceAttributesSchema.safeParse(data.attributes);
+        case 'Fileupload':
+          return FileUploadAttributesSchema.safeParse(data.attributes).success;
         default:
           return true; // If blockType is not in the predefined types, skip validation
       }
@@ -131,6 +137,8 @@ const BlockSchema = z.object({
 const CreateFormSchema = z.object({
   name: z.string().min(3, { message: 'Name must be at least two characters' }),
   description: z.string().optional(),
+  primaryColor: z.string(),
+  defaultBackgroundColor: z.string(),
   jsonBlocks: z.array(BlockSchema),
 });
 export class CreateFormDto extends createZodDto(CreateFormSchema) {}

@@ -16,7 +16,8 @@ export type FormBlockType =
   | 'Heading'
   | 'Paragraph'
   | 'Select'
-  | 'MultipleChoice';
+  | 'MultipleChoice'
+  | 'Fileupload';
 
 const acceptableBLockTypeForQuestion = [
   'TextField',
@@ -24,6 +25,7 @@ const acceptableBLockTypeForQuestion = [
   'Select',
   'StarRating',
   'MultipleChoice',
+  'Fileupload',
 ];
 
 type FormBlockInstance = {
@@ -65,7 +67,8 @@ export class ResponseService {
       const jsonBlocks = form.jsonBlocks;
       const responses = form.response;
 
-      const childBlockIds: Map<string, string> = new Map();
+      const childBlockIds: Map<string, { label: string; blockType: string }> =
+        new Map();
 
       if (jsonBlocks && typeof jsonBlocks === 'object') {
         // Check if it's an object before using Object.entries
@@ -82,6 +85,7 @@ export class ResponseService {
                       typedChildBlock.blockType,
                     )
                   ) {
+                    console.log('typedchildblock', typedChildBlock);
                     // Type narrowing for id and label to ensure they're strings
                     const childBlockId =
                       typeof typedChildBlock.id === 'string'
@@ -91,9 +95,10 @@ export class ResponseService {
                       typeof typedChildBlock.attributes?.label === 'string'
                         ? typedChildBlock.attributes.label
                         : '';
+                    const blockType = typedChildBlock.blockType;
 
                     // Use childBlock.id as the key and its label as the value
-                    childBlockIds.set(childBlockId, label);
+                    childBlockIds.set(childBlockId, { label, blockType });
                   }
                 } else {
                   console.log('childBlock is null or undefined');
@@ -111,31 +116,42 @@ export class ResponseService {
       }
 
       // Create a new map where the key is the label and the value is the response
-
-      const arrayOfResponses: { label: string; response: string }[][] = [];
+      console.log('childBlock', childBlockIds);
+      const arrayOfResponses: {
+        label: string;
+        response: string;
+      }[][] = [];
       for (const res of responses) {
-        const responseArray: { label: string; response: string }[] = []; // Array for each response
+        const responseArray: {
+          label: string;
+          response: string;
+          type: string;
+        }[] = []; // Array for each response
         // Iterate over childBlockIds for each response
-        childBlockIds.forEach((label, childBlockId) => {
+        childBlockIds.forEach(({ label, blockType }, childBlockId) => {
+          console.log('label', label);
           if (res.response) {
             if (res.response[childBlockId]) {
               if (Array.isArray(res.response?.[childBlockId])) {
                 const ans = res.response[childBlockId].join(', '); // Convert array to comma-separated string
-                console.log('Array converted to string:', ans);
+
                 responseArray.push({
                   label: label,
                   response: ans,
+                  type: blockType,
                 });
               } else {
                 responseArray.push({
                   label: label,
                   response: res.response[childBlockId] as string, // Default to empty string if no response
+                  type: blockType,
                 });
               }
             } else {
               responseArray.push({
                 label: label,
                 response: '', // Default to empty string if no response
+                type: blockType,
               });
             }
           }
@@ -146,9 +162,11 @@ export class ResponseService {
         arrayOfResponses.push(responseArray);
       }
       const headers: string[] = [];
-      childBlockIds.forEach((label, id) => {
+      childBlockIds.forEach(({ label }, id) => {
         headers.push(label);
       });
+
+      console.log('arrayOfResponses', arrayOfResponses);
 
       return {
         form,

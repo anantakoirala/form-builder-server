@@ -4,11 +4,14 @@ import { ValidationPipe } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { CustomZodValidationPipe } from './custom-zod-validation.pipe';
+import { join } from 'path';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api');
   app.use(cookieParser());
+  app.use('/uploads', express.static('uploads'));
   app.enableCors({
     origin: process.env.CLIENT_URL,
     credentials: true,

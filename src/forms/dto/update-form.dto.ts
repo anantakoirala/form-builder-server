@@ -10,6 +10,7 @@ const AcceptedChildBlockType = [
   'Paragraph',
   'Select',
   'MultipleChoice',
+  'Fileupload',
 ];
 
 // Define the schema for TextField attributes
@@ -26,6 +27,12 @@ const TextAreaAttributesSchema = z.object({
   required: z.boolean().default(false),
   helperText: z.string().trim().max(255).optional(),
   rows: z.number().min(1).max(20).default(3),
+});
+
+const FileUploadAttributesSchema = z.object({
+  label: z.string().trim().min(2).max(255),
+  required: z.boolean().default(false),
+  helperText: z.string().trim().max(255).optional(),
 });
 
 const SelectFieldAttributesSchema = z.object({
@@ -109,6 +116,8 @@ const ChildBlockSchema = z
         case 'MultipleChoice':
           return MultipleChoiceAttributesSchema.safeParse(data.attributes)
             .success;
+        case 'Fileupload':
+          return FileUploadAttributesSchema.safeParse(data.attributes).success;
         default:
           return true; // If blockType is not in the predefined types, skip validation
       }

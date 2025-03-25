@@ -12,15 +12,30 @@ export class FormsService {
   constructor(private prisma: PrismaService) {}
   async create(createFormDto: CreateFormDto, userId: number) {
     try {
-      const form = await this.prisma.form.create({
-        data: {
-          name: createFormDto.name,
-          description: createFormDto.description,
-          userId: userId,
-          jsonBlocks: createFormDto.jsonBlocks,
+      console.log('create', createFormDto);
+      const prismaTransaction = await this.prisma.$transaction(
+        async (prisma) => {
+          const createdForm = await prisma.form.create({
+            data: {
+              name: createFormDto.name,
+              description: createFormDto.description,
+              userId: userId,
+              jsonBlocks: createFormDto.jsonBlocks,
+            },
+          });
+          if (createdForm) {
+            const formSetting = await prisma.formSettings.create({
+              data: {
+                primaryColor: createFormDto.primaryColor,
+                backgroundColor: createFormDto.defaultBackgroundColor,
+                formId: createdForm.id,
+              },
+            });
+          }
+          return createdForm;
         },
-      });
-      return form;
+      );
+      return prismaTransaction;
     } catch (error) {
       console.log(error);
       throw new InternalServerErrorException(
