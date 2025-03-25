@@ -10,6 +10,7 @@ import { SignInDto } from './dto/singIn.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { Response } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -175,5 +176,16 @@ export class AuthService {
       accessToken: token.accessToken,
       refreshToken: token.refreshToken,
     };
+  }
+
+  logout(res: Response) {
+    try {
+      res.clearCookie('token');
+      res.clearCookie('refresh_token');
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Something went wrong, please try again later',
+      );
+    }
   }
 }

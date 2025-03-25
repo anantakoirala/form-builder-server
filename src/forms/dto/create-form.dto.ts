@@ -83,8 +83,6 @@ const ChildBlockSchema = z
     attributes: z.record(z.any()).optional(),
   })
   .superRefine((data, ctx) => {
-    console.log('Checking blockType:', data.blockType);
-
     if (!AcceptedChildBlockType.includes(data.blockType)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

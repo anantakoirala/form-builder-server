@@ -6,13 +6,13 @@ import {
 import { CreateFormDto } from './dto/create-form.dto';
 import { UpdateFormDto } from './dto/update-form.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { Response } from 'express';
 
 @Injectable()
 export class FormsService {
   constructor(private prisma: PrismaService) {}
   async create(createFormDto: CreateFormDto, userId: number) {
     try {
-      console.log('create', createFormDto);
       const prismaTransaction = await this.prisma.$transaction(
         async (prisma) => {
           const createdForm = await prisma.form.create({
@@ -42,7 +42,6 @@ export class FormsService {
         'Something went wrong, please try again later',
       );
     }
-    return 'This action adds a new form';
   }
 
   async findAll(userId: number) {
@@ -52,15 +51,22 @@ export class FormsService {
         orderBy: {
           createdAt: 'desc',
         },
+        include: {
+          _count: {
+            select: { response: true }, // Count the number of responses
+          },
+        },
       });
-      return forms;
+      return forms.map((form) => ({
+        ...form,
+        responseCount: form._count.response, // Attach response count to the result
+      }));
     } catch (error) {
       console.log('error', error);
       throw new InternalServerErrorException(
         'Something went wrong, please try again later',
       );
     }
-    return `This action returns all forms`;
   }
 
   async findOne(id: number, userId: number) {
@@ -106,8 +112,24 @@ export class FormsService {
     }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} form`;
+  async remove(id: number, userId: number) {
+    try {
+      const deletedForm = await this.prisma.form.delete({
+        where: { id, userId },
+      });
+
+      if (!deletedForm) {
+        throw new NotFoundException(`Form with ID ${id} not found`);
+      }
+
+      return { success: true, message: 'Form deleted successfully' };
+    } catch (error) {
+      console.log('error', error);
+
+      throw new InternalServerErrorException(
+        'Something went wrong, please try again later',
+      );
+    }
   }
 
   async getUserFormStat(userId: number) {

@@ -135,4 +135,14 @@ export class AuthController {
       token: result.accessToken,
     });
   }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('logout')
+  logout(@Res() res: Response) {
+    this.authService.logout(res);
+    return res.status(HttpStatus.OK).json({
+      success: true,
+      message: 'LogOut Successfully',
+    });
+  }
 }

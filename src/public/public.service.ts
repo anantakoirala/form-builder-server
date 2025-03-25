@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -47,7 +48,13 @@ export class PublicService {
       if (!form) {
         throw new NotFoundException('Not Found');
       }
-      return form;
+      const updateform = await this.prisma.form.update({
+        where: { id: id },
+        data: {
+          views: form.views + 1,
+        },
+      });
+      return updateform;
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error; // Ensure that the NotFoundException is not caught by another part of the code
@@ -63,7 +70,6 @@ export class PublicService {
     files: Express.Multer.File[],
   ) {
     try {
-      console.log('ya samma ta aayo hola ni');
       const form = await this.prisma.form.findUnique({
         where: { id: +body.formId },
       });
@@ -74,7 +80,6 @@ export class PublicService {
       const { formId, ...bodyWithOutFormId } = body;
 
       if (files.length > 0) {
-        console.log('bodywith', bodyWithOutFormId);
         files.forEach((file: Express.Multer.File, index: number) => {
           bodyWithOutFormId[file.fieldname] = file.path;
         });
@@ -100,6 +105,9 @@ export class PublicService {
   }
 
   checkValidInput(form: Form, bodyWithOutFormId: Record<string, unknown>) {
+    if (Object.keys(bodyWithOutFormId).length === 0) {
+      throw new BadRequestException('Request body cannot be empty');
+    }
     // Handle jsonBlocks if it exists
     const jsonBlocks = form.jsonBlocks;
     const childBlockIds: string[] = [];
@@ -110,7 +118,7 @@ export class PublicService {
             for (const childBlock of value.childBlocks) {
               if (childBlock && typeof childBlock === 'object') {
                 const typedChildBlock = childBlock as FormBlockInstance;
-                console.log('typedchildblock', typedChildBlock);
+
                 childBlockIds.push(typedChildBlock.id);
               }
             }

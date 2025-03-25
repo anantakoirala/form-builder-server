@@ -85,7 +85,6 @@ export class ResponseService {
                       typedChildBlock.blockType,
                     )
                   ) {
-                    console.log('typedchildblock', typedChildBlock);
                     // Type narrowing for id and label to ensure they're strings
                     const childBlockId =
                       typeof typedChildBlock.id === 'string'
@@ -116,7 +115,7 @@ export class ResponseService {
       }
 
       // Create a new map where the key is the label and the value is the response
-      console.log('childBlock', childBlockIds);
+
       const arrayOfResponses: {
         label: string;
         response: string;
@@ -129,7 +128,6 @@ export class ResponseService {
         }[] = []; // Array for each response
         // Iterate over childBlockIds for each response
         childBlockIds.forEach(({ label, blockType }, childBlockId) => {
-          console.log('label', label);
           if (res.response) {
             if (res.response[childBlockId]) {
               if (Array.isArray(res.response?.[childBlockId])) {
@@ -165,8 +163,6 @@ export class ResponseService {
       childBlockIds.forEach(({ label }, id) => {
         headers.push(label);
       });
-
-      console.log('arrayOfResponses', arrayOfResponses);
 
       return {
         form,
