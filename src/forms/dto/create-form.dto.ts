@@ -80,6 +80,7 @@ const ChildBlockSchema = z
   .object({
     id: z.string(),
     blockType: z.string(),
+    parentId: z.string(),
     attributes: z.record(z.any()).optional(),
   })
   .superRefine((data, ctx) => {

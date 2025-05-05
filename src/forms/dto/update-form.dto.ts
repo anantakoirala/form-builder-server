@@ -85,7 +85,7 @@ const ChildBlockSchema = z
   .refine(
     (data) => {
       // Log the blockType to the console
-      console.log('Checking blockType:', data.blockType);
+      // console.log('Checking blockType:', data.blockType);
 
       // Check if blockType is in AcceptedChildBlockType
       return AcceptedChildBlockType.includes(data.blockType);
