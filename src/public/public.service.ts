@@ -73,6 +73,7 @@ export class PublicService {
       const form = await this.prisma.form.findUnique({
         where: { id: +body.formId },
       });
+      console.log('form', form);
       if (!form) {
         throw new NotFoundException('Not Found');
       }
@@ -95,6 +96,7 @@ export class PublicService {
 
       return { success: true };
     } catch (error) {
+      console.log('error', error);
       if (error instanceof NotFoundException) {
         throw error; // Ensure that the NotFoundException is not caught by another part of the code
       }
@@ -129,7 +131,7 @@ export class PublicService {
 
     for (const [key, value] of Object.entries(bodyWithOutFormId)) {
       if (!childBlockIds.includes(key)) {
-        throw new InternalServerErrorException('something');
+        throw new InternalServerErrorException('something went wrong');
       }
     }
   }

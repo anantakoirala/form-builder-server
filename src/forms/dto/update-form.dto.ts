@@ -33,6 +33,10 @@ const FileUploadAttributesSchema = z.object({
   label: z.string().trim().min(2).max(255),
   required: z.boolean().default(false),
   helperText: z.string().trim().max(255).optional(),
+  fileSize: z.number().min(1).max(2).default(1),
+  fileTypes: z
+    .array(z.string())
+    .min(1, { message: 'At least one file type must be selected' }),
 });
 
 const SelectFieldAttributesSchema = z.object({

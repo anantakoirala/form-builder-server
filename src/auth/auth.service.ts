@@ -149,7 +149,10 @@ export class AuthService {
     }
 
     // Check if refresh token has expired
-    if (new Date(storedToken.expiresAt) < new Date()) {
+    if (new Date(storedToken.expiresAt).getTime() < Date.now()) {
+      await this.prisma.refreshToken.delete({
+        where: { id: storedToken.id },
+      });
       throw new UnauthorizedException(
         'Refresh token has expired. Please log in again.',
       );
