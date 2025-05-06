@@ -21,7 +21,7 @@ import { ResponseModule } from './response/response.module';
     PrismaModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
       useFactory: (configService: ConfigService) => ({
         secret: process.env.ACCESS_TOKEN_SECRET, // Correctly using the ConfigService to get values
         // Optional sign options
