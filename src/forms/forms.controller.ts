@@ -15,11 +15,23 @@ import { UpdateFormDto } from './dto/update-form.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from 'src/decorators/getUser';
 import { Response } from 'express';
+import { UpdateFormNameDto } from './dto/update-form-name.dto';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('forms')
 export class FormsController {
   constructor(private readonly formsService: FormsService) {}
+
+  @Post('update-form-name')
+  async updateFormName(
+    @GetUser() user: { userId: number },
+    @Body() updateFormNameDto: UpdateFormNameDto,
+  ) {
+    return await this.formsService.updateFormName(
+      updateFormNameDto,
+      user.userId,
+    );
+  }
 
   @Post()
   async create(

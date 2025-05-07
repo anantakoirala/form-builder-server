@@ -7,6 +7,7 @@ import { CreateFormDto } from './dto/create-form.dto';
 import { UpdateFormDto } from './dto/update-form.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Response } from 'express';
+import { UpdateFormNameDto } from './dto/update-form-name.dto';
 
 @Injectable()
 export class FormsService {
@@ -151,6 +152,28 @@ export class FormsService {
       return { views, totalResponses, totalForms };
     } catch (error: unknown) {
       console.error(error); // Log actual error
+      throw new InternalServerErrorException(
+        'Something went wrong, please try again later',
+      );
+    }
+  }
+
+  async updateFormName(updateFormNameDto: UpdateFormNameDto, userId: number) {
+    try {
+      const form = await this.prisma.form.findUnique({
+        where: { id: updateFormNameDto.formId },
+      });
+      if (!form) {
+        throw new NotFoundException('Form not found');
+      }
+      const updatedForm = await this.prisma.form.update({
+        where: { id: updateFormNameDto.formId },
+        data: {
+          name: updateFormNameDto.name,
+        },
+      });
+      return { success: true, name: updatedForm.name };
+    } catch (error) {
       throw new InternalServerErrorException(
         'Something went wrong, please try again later',
       );
